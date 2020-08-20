@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"github.com/gorilla/mux"
 )
 
 func homePage(w http.ResponseWriter, rt *http.Request) {
@@ -12,18 +13,23 @@ func homePage(w http.ResponseWriter, rt *http.Request) {
 	fmt.Println("Endpoint Hit: homePage")
 }
 
-func handleRequests() {
-	http.HandleFunc("/", homePage)
-	http.HandleFunc("/articles", returnAllArticles)
-	log.Fatal(http.ListenAndServe(":10000", nil))
-}
-
 func returnAllArticles(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint hit: return all articles")
 	json.NewEncoder(w).Encode(Articles)
 }
 
+func handleRequests() {
+	// initialize muxrouter
+	muxRouter := mux.NewRouter().StrictSlash(true)
+
+	muxRouter.HandleFunc("/", homePage)
+	muxRouter.HandleFunc("/articles", returnAllArticles)
+	// pass router instance to server
+	log.Fatal(http.ListenAndServe(":10000", muxRouter))
+}
+
 func main() {
+	fmt.Println("Rest API v2.0 - Mux Routers")
 	Articles = []Article{
 		Article{Title: "Article 1", Desc: "first description", Content: "Blah Blah"},
 		Article{Title: "Article 2", Desc: "second description", Content: "Blah Blah"},
