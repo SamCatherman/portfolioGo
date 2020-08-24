@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"io/ioutil"
 	"net/http"
 	"github.com/gorilla/mux"
 )
@@ -19,6 +20,8 @@ func indexArticles(w http.ResponseWriter, r *http.Request) {
 }
 
 func showArticle(w http.ResponseWriter, r *http.Request) {
+	// := shorthand variable declaration
+	// available inside function scope; otherwise use 'var'
 	params := mux.Vars(r)
 	// Loop over all of our Articles
     // if the article.Id equals the key we pass in
@@ -30,11 +33,18 @@ func showArticle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func createArticle(w http.ResponseWriter, r *http.Request) {
+   reqBody, _ := ioutil.ReadAll(r.	Body)
+   fmt.Println("Endpoint hit: creating article with params:", string(reqBody))
+   fmt.Fprint(w, "%+v", string(reqBody))
+
+}
+
 func handleRequests() {
 	// initialize muxrouter
 	muxRouter := mux.NewRouter().StrictSlash(true)
-
 	muxRouter.HandleFunc("/", homePage)
+	muxRouter.HandleFunc("/articles", createArticle).Methods("POST")
 	muxRouter.HandleFunc("/articles", indexArticles)
 	muxRouter.HandleFunc("/articles/{id}", showArticle)
 	// pass router instance to server
