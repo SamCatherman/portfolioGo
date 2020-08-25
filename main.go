@@ -34,10 +34,55 @@ func showArticle(w http.ResponseWriter, r *http.Request) {
 }
 
 func createArticle(w http.ResponseWriter, r *http.Request) {
-   reqBody, _ := ioutil.ReadAll(r.	Body)
+   // because readAll returns 2 vals
+   reqBody, _ := ioutil.ReadAll(r.Body)
    fmt.Println("Endpoint hit: creating article with params:", string(reqBody))
+
+   // initialize article
+   // unmarshal JSON into a struct.
+   // match incoming JSON fields to the keys used by Marshal, prefer exact match but case insensitive
+   var article Article
+   json.Unmarshal(reqBody, &article)
+
+   Articles = append(Articles, article)
    fmt.Fprint(w, "%+v", string(reqBody))
 
+   json.NewEncoder(w).Encode(article)
+}
+
+func deleteArticle(w http.ResponseWriter,  r *http.Request) {
+	// path params from mux
+	params := mux.Vars(r)
+
+	id := params["id"]
+
+	for idx, article := range Articles {
+	    if article.ID == id {
+			// curious about this syntax, spread?
+            // what abt the colon after idx + 1?
+			Articles = append(Articles[:idx], Articles[idx+1:]...)
+		}
+	}
+}
+
+func updateArticle(w http.ResponseWriter, r *http.Request) {
+    reqBody, _ := ioutil.ReadAll(r.Body)
+    fmt.Println("Endpoint hit: updating article with params:", string(reqBody))
+	
+	params := mux.Vars(r)
+    id := params["id"]
+
+	var articleParams Article
+	json.Unmarshal(reqBody, &articleParams)
+
+	for idx, article := range Articles {
+        if article.ID == id {
+		  fmt.Println("This article right here: ", article, idx)
+		  // replace current article with article params
+		  Articles[idx] =  articleParams
+		}
+	}
+    fmt.Println("updated articles list:", Articles)
 }
 
 func handleRequests() {
@@ -46,6 +91,8 @@ func handleRequests() {
 	muxRouter.HandleFunc("/", homePage)
 	muxRouter.HandleFunc("/articles", createArticle).Methods("POST")
 	muxRouter.HandleFunc("/articles", indexArticles)
+	muxRouter.HandleFunc("/articles/{id}", deleteArticle).Methods("DELETE")
+	muxRouter.HandleFunc("/articles/{id}", updateArticle).Methods("PUT")
 	muxRouter.HandleFunc("/articles/{id}", showArticle)
 	// pass router instance to server
 	log.Fatal(http.ListenAndServe(":10000", muxRouter))
